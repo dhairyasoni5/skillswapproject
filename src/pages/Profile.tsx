@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { Edit3, Star, Settings, Loader2 } from 'lucide-react';
+import { Save, Edit3, User, Star, Settings, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Skill {
@@ -121,6 +122,11 @@ export default function Profile() {
     }
   };
 
+  const getAverageRating = () => {
+    if (ratings.length === 0) return 0;
+    return ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+  };
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
@@ -212,225 +218,237 @@ export default function Profile() {
       <header className="bg-card border-b border-border shadow-soft sticky top-0 z-40">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex gap-4 items-center">
+            <div>
+              <h1 className="font-display text-xl font-bold text-foreground">
+                My Profile
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Manage your skills and preferences
+              </p>
+            </div>
+            <div className="flex gap-2">
               {isEditing ? (
                 <>
                   <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="bg-success hover:bg-success/90 text-white"
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
-                  </Button>
-                  <Button
-                    variant="destructive"
+                    variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(false)}
                     disabled={saving}
                   >
-                    Discard
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="bg-primary hover:bg-primary-glow"
+                  >
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
                   </Button>
                 </>
               ) : (
-                <>
-                  <span className="text-sm text-muted-foreground cursor-pointer" onClick={() => navigate('/requests')}>Swap request</span>
-                  <span className="text-sm text-muted-foreground cursor-pointer" onClick={() => navigate('/')}>Home</span>
-                </>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit3 className="h-4 w-4" />
+                </Button>
               )}
             </div>
-            <Avatar 
-              className="h-8 w-8 cursor-pointer"
-              onClick={() => navigate('/profile')}
-            >
-              <AvatarImage src={profile.profile_photo_url} />
-              <AvatarFallback className="text-xs">
-                {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
           </div>
         </div>
       </header>
 
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* Profile Info Card */}
         <Card className="shadow-medium border-0">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start gap-6">
-              {/* Left side - Form */}
-              <div className="flex-1 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-lg font-medium">Name</Label>
-                  {isEditing ? (
-                    <Input
-                      id="name"
-                      value={profile.name}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      className="border-b border-muted-foreground bg-transparent border-x-0 border-t-0 rounded-none px-0"
-                    />
-                  ) : (
-                    <div className="border-b border-muted-foreground pb-1">
-                      <span className="text-base">{profile.name || 'Enter your name'}</span>
-                    </div>
-                  )}
+          <CardHeader className="text-center">
+            <Avatar className="h-20 w-20 mx-auto ring-4 ring-primary/20">
+              <AvatarImage src={profile.profile_photo_url} alt={profile.name} />
+              <AvatarFallback className="bg-gradient-primary text-primary-foreground text-lg font-bold">
+                {getInitials(profile.name || 'U')}
+              </AvatarFallback>
+            </Avatar>
+            {ratings.length > 0 && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-warning text-warning" />
+                  <span className="font-medium">{getAverageRating().toFixed(1)}</span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location" className="text-lg font-medium">Location</Label>
-                  {isEditing ? (
-                    <Input
-                      id="location"
-                      value={profile.location}
-                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                      className="border-b border-muted-foreground bg-transparent border-x-0 border-t-0 rounded-none px-0"
-                    />
-                  ) : (
-                    <div className="border-b border-muted-foreground pb-1">
-                      <span className="text-base">{profile.location || 'Enter your location'}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-lg font-medium">Skills Offered</Label>
-                  {isEditing ? (
-                    <SkillSelector
-                      label=""
-                      selectedSkills={skillsOffered}
-                      onSkillsChange={setSkillsOffered}
-                      placeholder="What skills can you teach?"
-                    />
-                  ) : (
-                    <div className="flex flex-wrap gap-2 min-h-[40px] items-center">
-                      {skillsOffered.map((skill) => (
-                        <Badge key={skill.id} variant="skill" className="text-xs">
-                          {skill.name}
-                        </Badge>
-                      ))}
-                      {skillsOffered.length === 0 && (
-                        <span className="text-muted-foreground text-sm">No skills added</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-lg font-medium">Skills wanted</Label>
-                  {isEditing ? (
-                    <SkillSelector
-                      label=""
-                      selectedSkills={skillsWanted}
-                      onSkillsChange={setSkillsWanted}
-                      placeholder="What skills do you want to learn?"
-                    />
-                  ) : (
-                    <div className="flex flex-wrap gap-2 min-h-[40px] items-center">
-                      {skillsWanted.map((skill) => (
-                        <Badge key={skill.id} variant="outline" className="text-xs">
-                          {skill.name}
-                        </Badge>
-                      ))}
-                      {skillsWanted.length === 0 && (
-                        <span className="text-muted-foreground text-sm">No skills added</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-lg font-medium">Availability</Label>
-                  {isEditing ? (
-                    <Select
-                      value={profile.availability.join(',')}
-                      onValueChange={(value) => setProfile({ ...profile, availability: value.split(',').filter(Boolean) })}
-                    >
-                      <SelectTrigger className="border-b border-muted-foreground bg-transparent border-x-0 border-t-0 rounded-none">
-                        <SelectValue placeholder="Select availability" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weekdays">Weekdays</SelectItem>
-                        <SelectItem value="weekends">Weekends</SelectItem>
-                        <SelectItem value="evenings">Evenings</SelectItem>
-                        <SelectItem value="weekdays,weekends">Weekdays & Weekends</SelectItem>
-                        <SelectItem value="weekdays,evenings">Weekdays & Evenings</SelectItem>
-                        <SelectItem value="weekends,evenings">Weekends & Evenings</SelectItem>
-                        <SelectItem value="weekdays,weekends,evenings">Anytime</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="border-b border-muted-foreground pb-1">
-                      <span className="text-base">
-                        {profile.availability.length > 0 ? profile.availability.join(', ') : 'Set your availability'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-lg font-medium">Profile</Label>
-                  {isEditing ? (
-                    <Select
-                      value={profile.privacy_setting}
-                      onValueChange={(value) => setProfile({ ...profile, privacy_setting: value })}
-                    >
-                      <SelectTrigger className="border-b border-muted-foreground bg-transparent border-x-0 border-t-0 rounded-none">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Public</SelectItem>
-                        <SelectItem value="private">Private</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="border-b border-muted-foreground pb-1">
-                      <span className="text-base capitalize">{profile.privacy_setting}</span>
-                    </div>
-                  )}
-                </div>
+                <span className="text-sm text-muted-foreground">
+                  ({ratings.length} reviews)
+                </span>
               </div>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isEditing ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    placeholder="Enter your name"
+                  />
+                </div>
 
-              {/* Right side - Profile Photo */}
-              <div className="flex flex-col items-center gap-2">
-                <Avatar className="h-32 w-32 ring-4 ring-primary/20">
-                  <AvatarImage src={profile.profile_photo_url} alt={profile.name} />
-                  <AvatarFallback className="bg-gradient-primary text-primary-foreground text-2xl font-bold">
-                    {getInitials(profile.name || 'U')}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing ? (
-                  <div className="text-center space-y-1">
-                    <Input
-                      value={profile.profile_photo_url}
-                      onChange={(e) => setProfile({ ...profile, profile_photo_url: e.target.value })}
-                      placeholder="Photo URL"
-                      className="text-xs text-center"
-                    />
-                    <p className="text-xs text-muted-foreground">Add/Edit Photo</p>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={profile.location}
+                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                    placeholder="Enter your location"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="photo">Profile Photo URL</Label>
+                  <Input
+                    id="photo"
+                    value={profile.profile_photo_url}
+                    onChange={(e) => setProfile({ ...profile, profile_photo_url: e.target.value })}
+                    placeholder="Enter photo URL"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Availability</Label>
+                  <Select
+                    value={profile.availability.join(',')}
+                    onValueChange={(value) => setProfile({ ...profile, availability: value.split(',').filter(Boolean) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select availability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekdays">Weekdays</SelectItem>
+                      <SelectItem value="weekends">Weekends</SelectItem>
+                      <SelectItem value="evenings">Evenings</SelectItem>
+                      <SelectItem value="weekdays,weekends">Weekdays & Weekends</SelectItem>
+                      <SelectItem value="weekdays,evenings">Weekdays & Evenings</SelectItem>
+                      <SelectItem value="weekends,evenings">Weekends & Evenings</SelectItem>
+                      <SelectItem value="weekdays,weekends,evenings">Anytime</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="privacy">Public Profile</Label>
+                  <Switch
+                    id="privacy"
+                    checked={profile.privacy_setting === 'public'}
+                    onCheckedChange={(checked) => 
+                      setProfile({ ...profile, privacy_setting: checked ? 'public' : 'private' })
+                    }
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center">
+                  <h3 className="font-display text-lg font-semibold">{profile.name}</h3>
+                  {profile.location && (
+                    <p className="text-muted-foreground">{profile.location}</p>
+                  )}
+                </div>
+
+                {profile.availability.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Availability</p>
+                    <div className="flex flex-wrap gap-1">
+                      {profile.availability.map((time) => (
+                        <Badge key={time} variant="outline" className="text-xs">
+                          {time}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center">Profile Photo<br />Add/Edit Photo</p>
                 )}
-              </div>
-            </div>
 
-            {/* Edit Button - Only show when not in edit mode */}
-            {!isEditing && (
-              <div className="flex justify-center mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(true)}
-                  className="px-8"
-                >
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Profile Status</span>
+                  <Badge variant={profile.privacy_setting === 'public' ? 'success' : 'secondary'}>
+                    {profile.privacy_setting === 'public' ? 'Public' : 'Private'}
+                  </Badge>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Skills Section */}
+        <Card className="shadow-medium border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Skills
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isEditing ? (
+              <>
+                <SkillSelector
+                  label="Skills I Offer"
+                  selectedSkills={skillsOffered}
+                  onSkillsChange={setSkillsOffered}
+                  placeholder="What skills can you teach?"
+                />
+
+                <SkillSelector
+                  label="Skills I Want"
+                  selectedSkills={skillsWanted}
+                  onSkillsChange={setSkillsWanted}
+                  placeholder="What skills do you want to learn?"
+                />
+              </>
+            ) : (
+              <>
+                {skillsOffered.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Skills I Offer</p>
+                    <div className="flex flex-wrap gap-2">
+                      {skillsOffered.map((skill) => (
+                        <Badge key={skill.id} variant="skill">
+                          {skill.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {skillsWanted.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Skills I Want</p>
+                    <div className="flex flex-wrap gap-2">
+                      {skillsWanted.map((skill) => (
+                        <Badge key={skill.id} variant="outline">
+                          {skill.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {skillsOffered.length === 0 && skillsWanted.length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">
+                    No skills added yet. Click edit to add your skills.
+                  </p>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
 
         {/* Reviews Section */}
-        {ratings.length > 0 && !isEditing && (
+        {ratings.length > 0 && (
           <Card className="shadow-medium border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -466,25 +484,23 @@ export default function Profile() {
         )}
 
         {/* Settings */}
-        {!isEditing && (
-          <Card className="shadow-medium border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Account
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button
-                variant="destructive"
-                onClick={handleSignOut}
-                className="w-full"
-              >
-                Sign Out
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="shadow-medium border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Account
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="destructive"
+              onClick={handleSignOut}
+              className="w-full"
+            >
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Navigation isAdmin={profile.is_admin} />

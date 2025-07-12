@@ -1,28 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Loader2 } from 'lucide-react';
+import { MessageSquare, Clock, CheckCircle, XCircle, Star, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function Requests() {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading1, setLoading1] = useState(true);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const requestsPerPage = 3;
 
   useEffect(() => {
     if (user) {
@@ -35,7 +27,7 @@ export default function Requests() {
     if (!user) return;
     const { data } = await supabase
       .from('profiles')
-      .select('*')
+      .select('is_admin')
       .eq('user_id', user.id)
       .single();
     if (data) setCurrentUserProfile(data);
@@ -78,23 +70,6 @@ export default function Requests() {
     }
   };
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = searchTerm === '' || 
-      request.requester?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.recipient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.offered_skill?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.wanted_skill?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredRequests.length / requestsPerPage);
-  const startIndex = (currentPage - 1) * requestsPerPage;
-  const paginatedRequests = filteredRequests.slice(startIndex, startIndex + requestsPerPage);
-
   if (loading || loading1) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
@@ -109,74 +84,26 @@ export default function Requests() {
 
   return (
     <div className="min-h-screen bg-gradient-subtle pb-20">
-      {/* Header */}
       <header className="bg-card border-b border-border shadow-soft sticky top-0 z-40">
         <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">
-                Skill Swap Platform
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Manage your requests
-              </p>
-            </div>
-            <Avatar 
-              className="h-8 w-8 cursor-pointer"
-              onClick={() => navigate('/profile')}
-            >
-              <AvatarImage src={currentUserProfile?.profile_photo_url} />
-              <AvatarFallback className="text-xs">
-                {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          </div>
+          <h1 className="font-display text-xl font-bold text-foreground">
+            My Requests
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your skill swap requests
+          </p>
         </div>
       </header>
 
-      {/* Search and Filter */}
-      <div className="max-w-md mx-auto px-4 py-4 space-y-3">
-        <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Requests List */}
-      <div className="max-w-md mx-auto px-4">
-        {loading1 ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : paginatedRequests.length === 0 ? (
+      <div className="max-w-md mx-auto px-4 py-6">
+        {requests.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              {searchTerm || statusFilter !== 'all' ? 'No requests match your filters.' : 'No requests yet'}
-            </p>
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No requests yet</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {paginatedRequests.map((request) => {
+            {requests.map((request) => {
               const isRequester = request.requester_id === user.id;
               const otherUser = isRequester ? request.recipient : request.requester;
               
@@ -185,89 +112,78 @@ export default function Requests() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12">
+                        <Avatar className="h-10 w-10">
                           <AvatarImage src={otherUser?.profile_photo_url} />
                           <AvatarFallback>
                             {otherUser?.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className="font-medium text-lg">{otherUser?.name}</h3>
-                          <div className="text-sm space-y-1">
-                            <p><span className="text-primary">Skills Offered →</span> <span className="text-muted-foreground">{request.offered_skill?.name}</span></p>
-                            <p><span className="text-primary">Skill wanted →</span> <span className="text-muted-foreground">{request.wanted_skill?.name}</span></p>
-                          </div>
+                          <h3 className="font-medium">{otherUser?.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {isRequester ? 'Request sent' : 'Request received'}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge 
-                          variant={
-                            request.status === 'accepted' ? 'success' :
-                            request.status === 'rejected' ? 'destructive' :
-                            request.status === 'completed' ? 'default' : 'secondary'
-                          }
-                          className="mb-2"
-                        >
-                          {request.status}
-                        </Badge>
-                        {!isRequester && request.status === 'pending' && (
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              onClick={() => updateRequestStatus(request.id, 'accepted')}
-                              className="bg-success hover:bg-success/90 text-xs px-3"
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => updateRequestStatus(request.id, 'rejected')}
-                              className="text-xs px-3"
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                        {isRequester && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs px-3"
-                          >
-                            Request
-                          </Button>
-                        )}
-                      </div>
+                      <Badge 
+                        variant={
+                          request.status === 'accepted' ? 'success' :
+                          request.status === 'rejected' ? 'destructive' :
+                          request.status === 'completed' ? 'default' : 'secondary'
+                        }
+                      >
+                        {request.status}
+                      </Badge>
                     </div>
                   </CardHeader>
-                  {request.message && (
-                    <CardContent className="pt-0">
+                  <CardContent className="space-y-3">
+                    <div className="text-sm">
+                      <p><strong>Offering:</strong> {request.offered_skill?.name}</p>
+                      <p><strong>Wanting:</strong> {request.wanted_skill?.name}</p>
+                    </div>
+                    
+                    {request.message && (
                       <div className="bg-muted/50 p-3 rounded-lg">
                         <p className="text-sm">{request.message}</p>
                       </div>
-                    </CardContent>
-                  )}
+                    )}
+
+                    {!isRequester && request.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => updateRequestStatus(request.id, 'accepted')}
+                          className="bg-success hover:bg-success/90"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => updateRequestStatus(request.id, 'rejected')}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+
+                    {request.status === 'accepted' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateRequestStatus(request.id, 'completed')}
+                        className="w-full"
+                      >
+                        <Star className="h-4 w-4 mr-1" />
+                        Mark as Completed
+                      </Button>
+                    )}
+                  </CardContent>
                 </Card>
               );
             })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-6 pb-4">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                className="w-8 h-8 p-0"
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Button>
-            ))}
           </div>
         )}
       </div>
