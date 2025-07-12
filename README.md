@@ -1,7 +1,20 @@
 # Swap Hub Connect - Skill Exchange Platform
 
 A modern web application that connects people who want to exchange skills and knowledge. Built with React, TypeScript, Supabase, and Tailwind CSS.
+## 👥 Team Information
 
+**Team Name:** Team 1054  
+**Team Leader:** ASHUTOSH MISHRA  
+**Email:** ashutoshmishra2403@gmail.com  
+**Phone:** 9428382602  
+**Reviewer:** Darji Bhavik Dineshbhai (bda)
+
+### Team Members
+| Name           | Email                              | Phone      |
+|----------------|------------------------------------|------------|
+| Dhairya Soni   | dhairya.dce22@sot.pdpu.ac.in       | 9265091832 |
+| DHRUVIN VALIYA | dhruvin.vce22@sot.pdpu.ac.in       | 7041565655 |
+| Meghal Patel   | meghal.pce22@sot.pdpu.ac.in        | 8238067468 |
 ## 🌟 Features
 
 ### Core Functionality
