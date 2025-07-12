@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { ProfileCard } from '@/components/ProfileCard';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Filter, Loader2 } from 'lucide-react';
+import { Search, Filter, Loader2, Bell } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Profile {
@@ -29,10 +31,14 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [availability, setAvailability] = useState('all');
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  
+  const profilesPerPage = 3;
 
   useEffect(() => {
+    fetchProfiles();
     if (user) {
-      fetchProfiles();
       fetchCurrentUserProfile();
     }
   }, [user]);
@@ -135,6 +141,10 @@ export default function Home() {
   };
 
   const handleRequest = (profileId: string) => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
     navigate(`/request/${profileId}`);
   };
 
@@ -154,16 +164,17 @@ export default function Home() {
     return matchesSearch && matchesAvailability;
   });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredProfiles.length / profilesPerPage);
+  const startIndex = (currentPage - 1) * profilesPerPage;
+  const paginatedProfiles = filteredProfiles.slice(startIndex, startIndex + profilesPerPage);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
   }
 
   return (
@@ -180,14 +191,36 @@ export default function Home() {
                 Find your perfect skill match
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/auth')}
-              className="font-medium"
-            >
-              Login
-            </Button>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/requests')}
+                  className="relative"
+                >
+                  <Bell className="h-4 w-4" />
+                </Button>
+                <Avatar 
+                  className="h-8 w-8 cursor-pointer"
+                  onClick={() => navigate('/profile')}
+                >
+                  <AvatarImage src={currentUserProfile?.profile_photo_url} />
+                  <AvatarFallback className="text-xs">
+                    {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/auth')}
+                className="font-medium"
+              >
+                Login
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -226,7 +259,7 @@ export default function Home() {
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : filteredProfiles.length === 0 ? (
+        ) : paginatedProfiles.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
               {searchTerm ? 'No profiles match your search.' : 'No public profiles available.'}
@@ -234,7 +267,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredProfiles.map((profile) => (
+            {paginatedProfiles.map((profile) => (
               <ProfileCard
                 key={profile.id}
                 profile={{
@@ -246,7 +279,54 @@ export default function Home() {
             ))}
           </div>
         )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-6 pb-4">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                className="w-8 h-8 p-0"
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Login Required</DialogTitle>
+            <DialogDescription>
+              You need to be logged in to send swap requests.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 mt-4">
+            <Button 
+              onClick={() => {
+                setShowLoginDialog(false);
+                navigate('/auth');
+              }}
+              className="flex-1"
+            >
+              Login
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowLoginDialog(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Navigation isAdmin={currentUserProfile?.is_admin} />
     </div>
