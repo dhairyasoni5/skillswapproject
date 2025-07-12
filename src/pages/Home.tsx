@@ -3,13 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { ProfileCard } from '@/components/ProfileCard';
 import { Navigation } from '@/components/Navigation';
+import { PlatformMessages } from '@/components/PlatformMessages';
+import { useBannedCheck } from '@/hooks/use-banned-check';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Filter, Loader2, Bell } from 'lucide-react';
+import { Search, Filter, Loader2, Bell, X, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Profile {
@@ -26,6 +30,7 @@ interface Profile {
 export default function Home() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  useBannedCheck(); // Check if user is banned
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading1, setLoading1] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,11 +38,14 @@ export default function Home() {
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [platformMessages, setPlatformMessages] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(true);
   
   const profilesPerPage = 3;
 
   useEffect(() => {
     fetchProfiles();
+    fetchPlatformMessages();
     if (user) {
       fetchCurrentUserProfile();
     }
@@ -57,11 +65,22 @@ export default function Home() {
     }
   };
 
+  const fetchPlatformMessages = async () => {
+    const { data, error } = await (supabase as any)
+      .from('platform_messages')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setPlatformMessages(data);
+    }
+  };
+
   const fetchProfiles = async () => {
     setLoading1(true);
     try {
-      // Fetch profiles with their skills
-      const { data: profilesData, error: profilesError } = await supabase
+      let query = supabase
         .from('profiles')
         .select(`
           id,
@@ -72,7 +91,13 @@ export default function Home() {
           availability
         `)
         .eq('privacy_setting', 'public')
-        .neq('user_id', user?.id);
+        .eq('is_banned', false);
+
+      if (user?.id) {
+        query = query.neq('user_id', user.id);
+      }
+
+      const { data: profilesData, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
 
@@ -161,7 +186,11 @@ export default function Home() {
     const matchesAvailability = availability === 'all' || 
       (profile as any).availability?.includes(availability);
 
-    return matchesSearch && matchesAvailability;
+    // Hide incomplete profiles (no skills offered and no skills wanted)
+    const hasSkills = (profile.skillsOffered && profile.skillsOffered.length > 0) ||
+                     (profile.skillsWanted && profile.skillsWanted.length > 0);
+
+    return matchesSearch && matchesAvailability && hasSkills;
   });
 
   // Pagination
@@ -201,6 +230,17 @@ export default function Home() {
                 >
                   <Bell className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative"
+                >
+                  <Bell className="h-4 w-4" />
+                  {platformMessages.length > 0 && (
+                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full" />
+                  )}
+                </Button>
                 <Avatar 
                   className="h-8 w-8 cursor-pointer"
                   onClick={() => navigate('/profile')}
@@ -224,6 +264,55 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Platform Notifications */}
+      {showNotifications && platformMessages.length > 0 && (
+        <div className="max-w-md mx-auto px-4 py-4 space-y-3">
+          {platformMessages.map((message) => (
+            <Alert key={message.id} className="border-l-4 border-l-primary">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  {message.message_type === 'alert' ? (
+                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
+                  ) : message.message_type === 'warning' ? (
+                    <AlertTriangle className="h-4 w-4 text-warning mt-0.5" />
+                  ) : message.message_type === 'success' ? (
+                    <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                  ) : (
+                    <Info className="h-4 w-4 text-primary mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge 
+                        variant={
+                          message.message_type === 'alert' ? 'destructive' :
+                          message.message_type === 'warning' ? 'secondary' :
+                          message.message_type === 'success' ? 'default' : 'outline'
+                        }
+                        className="text-xs"
+                      >
+                        {message.message_type}
+                      </Badge>
+                      <span className="font-medium text-sm">{message.title}</span>
+                    </div>
+                    <AlertDescription className="text-sm">
+                      {message.message}
+                    </AlertDescription>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNotifications(false)}
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </Alert>
+          ))}
+        </div>
+      )}
 
       {/* Search and Filter */}
       <div className="max-w-md mx-auto px-4 py-4 space-y-3">
@@ -328,7 +417,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <Navigation isAdmin={currentUserProfile?.is_admin} />
+      <Navigation />
     </div>
   );
 }

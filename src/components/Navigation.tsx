@@ -4,12 +4,8 @@ import { Home, Search, MessageSquare, User, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 
-interface NavigationProps {
-  isAdmin?: boolean;
-}
-
-export const Navigation: React.FC<NavigationProps> = ({ isAdmin = false }) => {
-  const { user } = useAuth();
+export const Navigation: React.FC = () => {
+  const { user, isAdmin } = useAuth();
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },

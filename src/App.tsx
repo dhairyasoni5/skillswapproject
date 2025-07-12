@@ -10,6 +10,8 @@ import Browse from "./pages/Browse";
 import Profile from "./pages/Profile";
 import Requests from "./pages/Requests";
 import RequestSwap from "./pages/RequestSwap";
+import Admin from "./pages/Admin";
+import Banned from "./pages/Banned";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/requests" element={<Requests />} />
             <Route path="/request/:profileId" element={<RequestSwap />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/banned" element={<Banned />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

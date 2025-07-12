@@ -73,6 +73,7 @@ export default function Browse() {
   };
 
   const fetchProfiles = async () => {
+    if (!user) return;
     setLoading1(true);
     try {
       const { data: profilesData, error: profilesError } = await supabase
@@ -86,6 +87,7 @@ export default function Browse() {
           availability
         `)
         .eq('privacy_setting', 'public')
+        .eq('is_banned', false)
         .neq('user_id', user?.id);
 
       if (profilesError) throw profilesError;
@@ -287,7 +289,7 @@ export default function Browse() {
         )}
       </div>
 
-      <Navigation isAdmin={currentUserProfile?.is_admin} />
+      <Navigation />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
+import { makeUserAdmin, checkAdminStatus } from '@/lib/admin';
 import { SkillSelector } from '@/components/SkillSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { Save, Edit3, User, Star, Settings, Loader2 } from 'lucide-react';
+import { Save, Edit3, User, Star, Settings, Loader2, Shield } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Skill {
@@ -90,14 +91,15 @@ export default function Profile() {
         skills (
           id,
           name,
-          category
+          category,
+          is_approved
         )
       `)
       .eq('user_id', user.id);
 
     if (!error && data) {
-      const offered = data.filter(s => s.skill_type === 'offered').map(s => s.skills);
-      const wanted = data.filter(s => s.skill_type === 'wanted').map(s => s.skills);
+      const offered = data.filter(s => s.skill_type === 'offered' && s.skills.is_approved).map(s => s.skills);
+      const wanted = data.filter(s => s.skill_type === 'wanted' && s.skills.is_approved).map(s => s.skills);
       setSkillsOffered(offered);
       setSkillsWanted(wanted);
     }
@@ -106,16 +108,27 @@ export default function Profile() {
   const fetchRatings = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    // Try with join first
+    let { data, error } = await supabase
       .from('ratings')
       .select(`
         rating,
         feedback,
         created_at,
-        profiles!ratings_rater_id_fkey (name)
+        profiles:rater_id(name)
       `)
       .eq('rated_id', user.id)
       .order('created_at', { ascending: false });
+
+    // Fallback: if join fails, use no join
+    if (error) {
+      ({ data, error } = await supabase
+        .from('ratings')
+        .select('rating,feedback,created_at')
+        .eq('rated_id', user.id)
+        .order('created_at', { ascending: false })
+      );
+    }
 
     if (!error && data) {
       setRatings(data);
@@ -195,6 +208,35 @@ export default function Profile() {
     await signOut();
     navigate('/auth');
   };
+
+  const handleMakeAdmin = async () => {
+    if (!user) return;
+    
+    const success = await makeUserAdmin(user.id);
+    if (success) {
+      toast({
+        title: "Admin access granted",
+        description: "You now have admin privileges. Refresh the page to see admin features.",
+      });
+      // Refresh the page to update admin status
+      window.location.reload();
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to grant admin access.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Check admin status directly
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus(user.id).then(setIsAdmin);
+    }
+  }, [user]);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -491,7 +533,17 @@ export default function Profile() {
               Account
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            {!isAdmin && (
+              <Button
+                variant="outline"
+                onClick={handleMakeAdmin}
+                className="w-full"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Make Me Admin
+              </Button>
+            )}
             <Button
               variant="destructive"
               onClick={handleSignOut}
@@ -503,7 +555,7 @@ export default function Profile() {
         </Card>
       </div>
 
-      <Navigation isAdmin={profile.is_admin} />
+      <Navigation />
     </div>
   );
 }
