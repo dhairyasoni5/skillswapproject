@@ -1,8 +1,10 @@
 # Swap Hub Connect - Skill Exchange Platform
 
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?style=flat&logo=github)](https://github.com/dhairyasoni5/skillswapproject)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-green?style=flat&logo=vercel)](https://skillswapproject.vercel.app/)
 
 A modern web application that connects people who want to exchange skills and knowledge. Built with React, TypeScript, Supabase, and Tailwind CSS.
+**🌐 Live Demo:** [https://skillswapproject.vercel.app/](https://skillswapproject.vercel.app/)
 ## 👥 Team Information
 
 **Team Name:** Team 1054  
