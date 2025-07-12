@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Browse from "./pages/Browse";
 import Profile from "./pages/Profile";
 import Requests from "./pages/Requests";
+import RequestSwap from "./pages/RequestSwap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/browse" element={<Browse />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/requests" element={<Requests />} />
+            <Route path="/request/:profileId" element={<RequestSwap />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
