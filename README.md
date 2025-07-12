@@ -1,73 +1,155 @@
-# Welcome to your Lovable project
+# Swap Hub Connect
 
-## Project info
+A modern web application for connecting users to swap and trade items. Built with React, TypeScript, and Supabase for a seamless user experience.
 
-**URL**: https://lovable.dev/projects/31c6ae61-5884-4dce-bc79-74df9a4a0ccb
+## 🚀 Features
 
-## How can I edit this code?
+- **User Authentication** - Secure login and registration system
+- **Browse Items** - Discover items available for swapping
+- **Request Swaps** - Initiate swap requests with other users
+- **Profile Management** - Manage your profile and item listings
+- **Admin Panel** - Administrative tools for platform management
+- **Real-time Updates** - Live notifications and updates
+- **Responsive Design** - Works seamlessly across all devices
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
+### Frontend
+- **React 18** - Modern React with hooks and functional components
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and development server
+- **React Router** - Client-side routing
+- **TanStack Query** - Data fetching and caching
+- **React Hook Form** - Form handling with validation
+- **Zod** - Schema validation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/31c6ae61-5884-4dce-bc79-74df9a4a0ccb) and start prompting.
+### UI/UX
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Beautiful, accessible UI components
+- **Radix UI** - Unstyled, accessible UI primitives
+- **Lucide React** - Beautiful icons
+- **Sonner** - Toast notifications
+- **Next Themes** - Dark/light mode support
 
-Changes made via Lovable will be committed automatically to this repo.
+### Backend
+- **Supabase** - Backend-as-a-Service with PostgreSQL
+- **Supabase Auth** - Authentication and authorization
+- **PostgreSQL** - Database
 
-**Use your preferred IDE**
+## 📦 Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or bun package manager
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Setup Instructions
 
-Follow these steps:
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd swap-hub-connect
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+3. **Environment Setup**
+   Create a `.env.local` file in the root directory with your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+4. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   bun dev
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+5. **Open your browser**
+   Navigate to `http://localhost:5173` to see the application.
+
+## 🏗️ Project Structure
+
+```
+src/
+├── components/     # Reusable UI components
+├── pages/         # Page components
+├── hooks/         # Custom React hooks
+├── lib/           # Utility functions and configurations
+├── integrations/  # Third-party integrations
+└── App.tsx        # Main application component
 ```
 
-**Edit a file directly in GitHub**
+## 🚀 Available Scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-**Use GitHub Codespaces**
+## 🔧 Development
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Code Style
+This project uses ESLint for code linting and TypeScript for type safety. Make sure to run the linter before committing:
 
-## What technologies are used for this project?
+```bash
+npm run lint
+```
 
-This project is built with:
+### Database Migrations
+The project uses Supabase for database management. Database migrations are stored in the `supabase/migrations/` directory.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🌐 Deployment
 
-## How can I deploy this project?
+### Vercel (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
 
-Simply open [Lovable](https://lovable.dev/projects/31c6ae61-5884-4dce-bc79-74df9a4a0ccb) and click on Share -> Publish.
+### Netlify
+1. Connect your GitHub repository to Netlify
+2. Set build command: `npm run build`
+3. Set publish directory: `dist`
+4. Configure environment variables
 
-## Can I connect a custom domain to my Lovable project?
+### Manual Deployment
+1. Build the project: `npm run build`
+2. Upload the `dist` folder to your web server
+3. Configure your server to serve the static files
 
-Yes, you can!
+## 🤝 Contributing
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/your-repo/issues) page
+2. Create a new issue with detailed information
+3. Contact the development team
+
+## 🔗 Links
+
+- [Live Demo](https://your-demo-url.com)
+- [Documentation](https://your-docs-url.com)
+- [API Reference](https://your-api-docs-url.com)
+
+---
+
+Built with ❤️ using modern web technologies
