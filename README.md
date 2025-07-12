@@ -5,7 +5,7 @@
 
 A modern web application that connects people who want to exchange skills and knowledge. Built with React, TypeScript, Supabase, and Tailwind CSS.
 
-##🌐 Live Demo:** [https://skillswapproject.vercel.app/](https://skillswapproject.vercel.app/)
+##🌐 Live Demo: [https://skillswapproject.vercel.app/](https://skillswapproject.vercel.app/)
 ## 👥 Team Information
 
 **Team Name:** Team 1054  
