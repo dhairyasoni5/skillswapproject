@@ -1,5 +1,7 @@
 # Swap Hub Connect - Skill Exchange Platform
 
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?style=flat&logo=github)](https://github.com/dhairyasoni5/skillswapproject)
+
 A modern web application that connects people who want to exchange skills and knowledge. Built with React, TypeScript, Supabase, and Tailwind CSS.
 ## 👥 Team Information
 
@@ -73,8 +75,8 @@ A modern web application that connects people who want to exchange skills and kn
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd swap-hub-connect
+   git clone https://github.com/dhairyasoni5/skillswapproject.git
+   cd skillswapproject
    ```
 
 2. **Install dependencies**
